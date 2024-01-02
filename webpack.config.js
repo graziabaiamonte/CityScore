@@ -1,5 +1,3 @@
-// Generated using webpack-cli https://github.com/webpack/webpack-cli
-
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -7,7 +5,9 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const isProduction = process.env.NODE_ENV == 'production';
 
 
-const stylesHandler = MiniCssExtractPlugin.loader;
+const stylesHandler = isProduction
+? MiniCssExtractPlugin.loader
+: 'style-loader';
 
 
 
@@ -20,6 +20,7 @@ const config = {
     devServer: {
         open: true,
         host: 'localhost',
+        static: path.resolve(__dirname, 'dist'),
     },
     plugins: [
         new HtmlWebpackPlugin({
@@ -32,8 +33,7 @@ const config = {
 
         ),
 
-        // Add your plugins here
-        // Learn more about plugins from https://webpack.js.org/configuration/plugins/
+        
     ],
     module: {
         rules: [
