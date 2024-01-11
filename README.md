@@ -23,4 +23,3 @@ The application must consist of a simple search text box (Google textbox style) 
 Once the user clicks on the appropriate button, the application will have to contact the API of the external Teleport service to obtain the requested information.
 
 ## Visit the [website](https://graziabaiamonte.github.io/CityScore/)
-
