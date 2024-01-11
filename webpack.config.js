@@ -47,11 +47,14 @@ const config = {
             },
             {
                 test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+                
                 use: [
                     {
                         loader: 'file-loader',
                         options: {
-                            outputPath:'img',
+                            
+                            outputPath:'img/',
+                             
                         }
                     },
 

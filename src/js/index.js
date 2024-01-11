@@ -1,71 +1,171 @@
 
- import '../css/styles.css';
+import '../css/style.css'
+import axios from "axios";
 
- const searchButton = document.getElementById('searchButton');
-const summary = document.getElementById('summary');
-const cityNameInput = document.getElementById('cityNameInput');
-const imageElement = document.getElementById('cityImage');
-const body = document.querySelector('body')
-const boxInfo = document.getElementById('boxInfo');
-const boxGenerale = document.getElementById('box-generale');
-const titolo = document.createElement('h2');
-const dropdownList = document.getElementById('cityDropdown');
-const cityListItems = document.querySelectorAll('#cityDropdown li');
-let currentCityName = '';
-const boxCategorie = document.querySelector('.box-categorie');
+const searchButton = document.getElementById("searchBtn");
+const cityInput = document.getElementById("cityInput");
+const resultsDiv = document.getElementById("results");
+const suggestionsDropdown = document.getElementById("suggestionsDropdown");
 
 
-// Function to show city data
 
-function showCityData(cityName) {
-  const messageError = document.getElementById('messageError');
-  messageError.innerHTML = '';
-  messageError.classList.remove('messageError');
+searchButton.addEventListener("click", () => performSearch());
 
-  axios.get(`https://api.teleport.org/api/urban_areas/slug:${cityName}/images/`)
-      .then(function (response) {
-          let cityImage = response.data.photos[0]?.image?.mobile;
+function setBoxHomeBackground(imageUrl) {
+    const boxHome = document.querySelector('.boxHome');
+    boxHome.style.backgroundImage = `url('${imageUrl}')`;
+}
 
-          if (cityImage) {
-              if (cityName !== currentCityName) {
-                  boxGenerale.style.backgroundImage = `url(${cityImage})`;
-                  boxGenerale.style.backgroundSize = 'contain';
-                  
-                  
+cityInput.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
+        performSearch();
+        suggestionsDropdown.style.display = "none";
+    }
+});
 
-                  let overlayImage = document.createElement('div');
-                  overlayImage.style.backgroundImage = `url(${cityImage})`;
-                 
-                  
-                  overlayImage.classList.add('overlay-image');
-          
-                  // Aggiungi l'elemento immagine con opacità al box-generale
-                  boxGenerale.appendChild(overlayImage)
-              }
 
-              axios.get(`https://api.teleport.org/api/urban_areas/slug:${cityName}/scores/`)
-                  .then(function (response) {
-                      let dati = response.data;
+cityInput.addEventListener("input", async () => {
+    const cityName = cityInput.value.trim();
 
-                      titolo.textContent = cityName;
-                      let headerElement = document.getElementById('header');
-                      headerElement.innerHTML = '';
-                      headerElement.appendChild(titolo);
-                      titolo.style.textAlign = 'center';
-                      titolo.style.fontSize = '36px';
-                      titolo.style.fontWeight = '700';
-                      summary.innerHTML = response.data.summary;
-                      
+    // Esegui una chiamata API per ottenere i suggerimenti di città
+    try {
+        const suggestions = await fetchCitySuggestions(cityName);
+        displaySuggestions(suggestions);
+    } catch (error) {
+        console.error(error);
+    }
+});
 
-                      let categnumeri = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+// Funzione per ottenere i suggerimenti di città
+async function fetchCitySuggestions(cityName) {
+    const response = await axios.get(`https://api.teleport.org/api/cities/?search=${cityName}`);
+    const data = response.data;
+
+    if (data.count === 0) {
+        return [];
+    }
+
+    return data._embedded["city:search-results"].map(result => result.matching_full_name);
+}
+
+// Funzione per visualizzare i suggerimenti nel dropdown
+function displaySuggestions(suggestions) {
+    // Pulisci il dropdown
+    suggestionsDropdown.innerHTML = "";
+
+    // Aggiungi suggerimenti al dropdown
+    suggestions.forEach(suggestion => {
+        const suggestionItem = document.createElement("li");
+        suggestionItem.textContent = suggestion;
+        suggestionItem.addEventListener("click", () => {
+            // Quando un suggerimento viene cliccato, imposta l'input della città e esegui la ricerca
+            cityInput.value = suggestion;
+            suggestionsDropdown.style.display = 'none'
+            performSearch(suggestion);
+        });
+        suggestionsDropdown.appendChild(suggestionItem);
+    });
+ 
+   
+
+
+    // Mostra il dropdown solo se ci sono suggerimenti
+    suggestionsDropdown.style.display = suggestions.length > 0 ? "block" : "none";
+}
+
+
+
+
+
+
+
+//parametri ricerca
+async function performSearch() {
+    hideErrorMessage();
+    const cityName = cityInput.value.trim();
+
+    if (cityName.length === 0) {
+        displayError(`Please, enter a city name.`);
+        return;
+    }
+
+    try {
+
+        document.getElementById('homeImg').style.display = "block";
+        document.querySelector('.box-categorie').style.display = "flex";
+        document.getElementById('results').style.display = "block";
+
+        
+
+        document.querySelector('.boxHome').classList.add('boxHome-searching');
+
+        const data = await fetchCityData(cityName);
+        displayResults(data);
+        setBoxHomeBackground(data.imageUrl);
+        cityInput.value = "";
+    } catch (error) {
+        console.error(error);
+        displayError(`City not found.`);
+    } 
+}
+
+//chiamata API
+async function fetchCityData(cityName) {
+ try {
+    const response = await axios.get(`https://api.teleport.org/api/cities/?search=${cityName}`);
+    const data = response.data;
+
+    if (data.count === 0) {
+        throw new Error("City not found.");
+    }
+    //dati città
+    const cityId = data._embedded["city:search-results"][0]._links["city:item"].href;
+    const cityResponse = await axios.get(cityId);
+    const cityData = cityResponse.data;
+    //punteggio città
+    const urbanAreaId = cityData._links["city:urban_area"].href;
+    const urbanAreaScoresResponse = await axios.get(`${urbanAreaId}scores/`);
+    const urbanAreaScoresData = urbanAreaScoresResponse.data;
+    //img città
+    const urbanAreaSlug = cityData._links["city:urban_area"].href.split("/").slice(-2)[0];
+    const urbanAreaImagesResponse = await axios.get(`https://api.teleport.org/api/urban_areas/${urbanAreaSlug}/images/`);
+    const urbanAreaImagesData = urbanAreaImagesResponse.data;
+
+    //ritorno dei dati
+    return {
+        teleport_cityName: data._embedded["city:search-results"][0].matching_full_name,
+        teleport_city_score: urbanAreaScoresData.teleport_city_score,
+        summary: urbanAreaScoresData.summary,
+        categories: urbanAreaScoresData.categories,
+        imageUrl: urbanAreaImagesData.photos[0].image.web
+    };
+ }catch(error) {
+    throw new Error("error during api call");
+ }
+}
+
+async function displayResults(data) {
+    
+
+    
+    const resultsDiv = document.getElementById("results");
+   
+    const cityImage = document.createElement("img");
+    cityImage.src = data.imageUrl;
+    cityImage.style.width = "100%";
+    cityImage.style.height = "auto";
+
+
+    const boxCategorie = document.querySelector('.box-categorie');
+    let categnumeri = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
                       categnumeri.forEach((number) => {
                           let container = document.createElement('div');
                           let name = document.createElement('h3');
                           let value = document.createElement('p');
-                          name.textContent = dati.categories[number].name;
-                          value.textContent = dati.categories[number].score_out_of_10.toFixed(2);
+                          name.textContent = data.categories[number].name;
+                          value.textContent = data.categories[number].score_out_of_10.toFixed(2);
                           let progressBar = document.createElement('progress');
-                          progressBar.value = dati.categories[number].score_out_of_10;
+                          progressBar.value = data.categories[number].score_out_of_10;
                           progressBar.max = 10;
                           container.appendChild(name);
                           container.appendChild(value);
@@ -73,147 +173,37 @@ function showCityData(cityName) {
                           boxCategorie.appendChild(container);
                           container.classList.add('categories');
                       });
-                  })
-                  .catch(function (error) {
-                      console.log('Error fetching scores: ', error);
-                      showNotFoundMessage();
-                  });
 
-              boxGenerale.style.height = '80%';
-          }
-      })
-      .catch(function (error) {
-          console.log('Error fetching image: ', error);
-          showNotFoundMessage();
-      });
+
+
+
+
+
+
+                      
+    resultsDiv.innerHTML = `
+        <h1>${data.teleport_cityName}</h1>
+        <h3>Teleport City Score</h3>
+        <h2>${data.teleport_city_score.toFixed(2)}</h2>
+        <p>${data.summary}</p>
+        `;
+}
+  
+function displayError(message) {
+    
+    document.querySelector('.box-categorie').style.display = "none";
+    document.querySelector('.boxHome').style.height = "100vh";
+    document.querySelector('.boxHome').style.backgroundImage = "url('https://images.unsplash.com/photo-1588312744377-2adfb7b8578a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')";
+
+    document.getElementById('results').style.display = "none";
+
+
+    const errorMexBox = document.querySelector('.errorMex');
+    errorMexBox.innerHTML = `<p class="error">${message}</p>`;
 }
 
 
-  
-  function showNotFoundMessage(){
-    const message = document.createElement('p');
-    message.innerHTML = 'City not found';
-    const messageError = document.getElementById('messageError');
-    messageError.innerHTML = '';
-    messageError.appendChild(message);
-    messageError.classList.add('messageError');
-
-    imageElement.style.visibility = 'hidden';
-
-    
-    summary.innerHTML = '';
-    titolo.textContent = '';
-
-    // Rimuovi le categorie esistenti
-    const existingCategories = document.querySelectorAll('.categories');
-    existingCategories.forEach(category => category.remove());
-  }
-    
-
-
-// Function to show the list of cities based on the query
-
-async function showCitiesList(query) {
-    
-  
-    try {
-      const response = await axios.get(`https://api.teleport.org/api/urban_areas/`);
-      const cities = response.data._links['ua:item'];
-  
-      // Clear the previous content of the dropdown
-      dropdownList.innerHTML = '';
-  
-      // Filtra le città in base al nome inserito nell'input
-      const filteredCities = cities.filter(city => city.name.toLowerCase().includes(query.toLowerCase()));
-  
-      // Show the list of matching cities
-      filteredCities.forEach(city => {
-        const option = document.createElement('li');
-        const cityNameLower = city.name;
-        option.textContent = cityNameLower;
-  
-        option.addEventListener('click', function () {
-            const cityName = cityNameLower.toLowerCase();
-            cityNameInput.value = cityName;
-        
-          imageElement.src = '';
-          dropdownList.style.display = 'none'
-        });
-  
-        dropdownList.appendChild(option);
-      });
-  
-      // Show the dropdown only if there are search results
-      dropdownList.classList.toggle('show', filteredCities.length > 0);
-    } catch (error) {
-      console.error('Error during API request:', error.message);
-    }
-  }
-  
-
-
-
-
-// Funzione di callback per la selezione di una città dall'elenco
-function cityClickHandler(cityName) {
-  showCityData(cityName);
-  imageElement.src = '';
-
-  const existingCategories = document.querySelectorAll('.categories');
-  existingCategories.forEach(category => category.remove());
-dropdownList.style.display = 'none';
-  
+function hideErrorMessage() {
+    const errorMexBox = document.querySelector('.errorMex');
+    errorMexBox.innerHTML = ""; // Rimuove il contenuto del messaggio di errore
 }
-  cityListItems.forEach(li => {
-    li.addEventListener('click', () => {
-      const cityName = li.textContent;
-      cityClickHandler(cityName);
-      dropdownList.style.display = 'none';
-    });
-});
-
-
-
-
-cityNameInput.addEventListener('input', function () {
-  const query = cityNameInput.value.trim();
-  showCitiesList(query);
-  boxGenerale.style.height = '100%';
-  boxInfo.style.visibility = 'hidden'
-  boxCategorie.style.visibility = 'hidden';
-  imageElement.style.visibility = 'hidden';
-  dropdownList.style.display = 'block';
-});
-
-
-
- searchButton.addEventListener('click', function () {
-  const cityName = cityNameInput.value;
-  showCityData(cityName);
-  boxInfo.classList.remove('d-none');
-  boxInfo.classList.add('boxInfo');
-  boxInfo.style.visibility = 'visible';
-  boxCategorie.style.visibility = 'visible';
-  boxGenerale.style.height = '50%';
- });
-
- searchButton.addEventListener('click', function(){
-    imageElement.src = '';
-    summary.innerHTML = '';
-
-  const existingCategories = document.querySelectorAll('.categories');
-  existingCategories.forEach(category => category.remove());
-
-  const cityName = cityNameInput.value;
-
-  titolo.textContent = cityName;
-  const headerElement = document.getElementById('header');
-  headerElement.appendChild(titolo);
-
-  if (!cityName){
-    boxInfo.classList.add('d-none');
-  } else{
-    boxInfo.classList.remove('d-none');
-  boxInfo.classList.add('boxInfo');
-  }
- });
