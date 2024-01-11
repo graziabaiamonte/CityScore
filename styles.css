@@ -16,7 +16,6 @@ h2 {
   margin-bottom: 50px;
 }
 
-
 .boxHome{
   background-image: url('https://images.unsplash.com/photo-1588312744377-2adfb7b8578a?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
   background-position: center;
@@ -79,9 +78,7 @@ h2 {
     max-height: 200px;
     overflow-y: auto;
     overflow-x: hidden;
-  
-    
-    }
+  }
 
   #suggestionsDropdown li {
     padding: 10px;
@@ -123,19 +120,6 @@ h2 {
   text-align: center;
 }
 
-
-
-
-
-
-  
-
-
-
-
-
-
-
 .categories{
   background-color: #bccbd861;
   height: 120px;
@@ -161,9 +145,7 @@ h2 {
 
 }
 
-
 .messageError{
-  
   display: flex;
   justify-content: center;
   padding: 30px;
@@ -189,13 +171,9 @@ progress::-webkit-progress-value {
   border-radius: 10px;
 }
 
-
-
 #cityImage {
   display: none;
 }
-
-
 
 #footer{
   background-color: #bccbd883;
