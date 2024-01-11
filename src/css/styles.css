@@ -53,7 +53,7 @@ body, html{
     
   
   #box-generale{
-    background-image: url("./img/sfondo.jpg"); 
+   
     background-position: center;
     background-repeat: no-repeat;
     background-size: cover; 
@@ -63,7 +63,6 @@ body, html{
     align-items: center;
    height: 100%;
     z-index: 2;
-    
   } 
   
   .box-search{

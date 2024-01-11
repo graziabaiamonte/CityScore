@@ -58,7 +58,9 @@ const config = {
                     {
                         loader: 'img-optimize-loader',
                         options: {
-                            compress: {mode:'loseless'}
+                            compress: {
+                                mode:'lossless'
+                            }
                         }
                     }
                 ]
