@@ -22,5 +22,5 @@ The application must consist of a simple search text box (Google textbox style) 
 
 Once the user clicks on the appropriate button, the application will have to contact the API of the external Teleport service to obtain the requested information.
 
-## Visit the [website](https://graziabaiamonte.github.io/cityscores/)
+## Visit the [website](https://graziabaiamonte.github.io/CityScore/)
 <img width="1440" alt="Screenshot 2023-12-12 alle 22 21 50" src="https://github.com/graziabaiamonte/cityscores/assets/146842007/0e97b0df-e351-47c0-b421-33577f72168a">
