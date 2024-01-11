@@ -216,4 +216,12 @@ progress::-webkit-progress-value {
     flex-direction: column;
     text-align: center;
   }
+
+  #boxHomeText{
+    width: 300px;
+  }
+
+  #boxHomeText h1 {
+    font-size: 30px;
+  }
 }
